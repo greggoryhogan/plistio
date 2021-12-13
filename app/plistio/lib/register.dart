@@ -15,7 +15,7 @@ class _RegisterState extends State<Register> {
 
   Future register() async {
     try {
-      var passphrase = 'I built an xv920';
+      var passphrase = '';
       FormData formData = new FormData.fromMap({
         'email': user.text,
         'password': pass.text,
