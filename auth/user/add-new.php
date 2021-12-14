@@ -4,23 +4,24 @@
  */ 
 
 require($_SERVER['DOCUMENT_ROOT'].'/plistio.php');
+header('Access-Control-Allow-Origin: *');
 header('Content-Type: application/json');
 if($_POST['passphrase'] != PLISTIO_PASSPHRASE) {
+	http_response_code(400);
 	echo json_encode(array(
-		'status' => 400,
-		'message' => 'Tisk tisk tisk using '.$_POST['passphrase'],
+		'message' => 'Tisk tisk tisk.',
 	));
 } else if(!empty($_POST['email']) && !empty($_POST['password'])) {
 	$email = mysqli_real_escape_string($plistio_sql, $_POST['email']);
 	$password = mysqli_real_escape_string($plistio_sql, $_POST['password']);
-	$query = sprintf("SELECT auth_code FROM users WHERE user_email='%s' AND user_pass='%s'", $email, $password);
+	$query = sprintf("SELECT auth_code FROM users WHERE user_email='%s'", $email);
 	// Perform Query
 	$result = mysqli_query($plistio_sql,$query);
 
 	//check if user already exists
 	if(mysqli_num_rows($result)) {
+		http_response_code(400);
 		echo json_encode(array(
-			'status' => 400,
 			'message' => 'This user has been previously registered.',
 		));
 		die();
@@ -44,13 +45,13 @@ if($_POST['passphrase'] != PLISTIO_PASSPHRASE) {
 		$result = mysqli_query($plistio_sql,$query);
 		
 		if (!$result) {
+			http_response_code(400);
 			echo json_encode(array(
-				'status' => 400,
 				'message' => 'Error inserting user.',
 			));
 		} else {
+			http_response_code(200);
 			echo json_encode(array(
-				'status' => 200,
 				'message' => 'Account created successfully.',
 				'auth_code' => $auth_code
 			));
@@ -58,9 +59,10 @@ if($_POST['passphrase'] != PLISTIO_PASSPHRASE) {
 	} 
 
 } else {
+	http_response_code(400);
 	echo json_encode(array(
-		'status' => 400,
 		'message' => 'All fields are required.',
 	));
 }
+exit;
 ?>

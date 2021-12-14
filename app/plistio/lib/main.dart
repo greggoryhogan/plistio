@@ -1,11 +1,10 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
-import 'package:plistio/register.dart';
+import 'package:plistio/screens/register.dart';
+import 'package:plistio/screens/dashboard.dart';
+import 'package:plistio/screens/login.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:io';
-import 'package:dio/dio.dart';
-
-import 'DashBoard.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MyHttpOverrides extends HttpOverrides {
   @override
@@ -16,32 +15,53 @@ class MyHttpOverrides extends HttpOverrides {
   }
 }
 
-void main() {
+Future main() async {
+  // To load the .env file contents into dotenv.
+  // NOTE: fileName defaults to .env and can be omitted in this case.
+  // Ensure that the filename corresponds to the path in step 1 and 2.
+  await dotenv.load(fileName: ".env");
   HttpOverrides.global = new MyHttpOverrides();
+  SharedPreferences.getInstance().then((prefs) {
+    runApp(MyApp(prefs: prefs));
+  });
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  final SharedPreferences prefs;
+  MyApp({this.prefs});
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Plistio',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.blueGrey,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: MyHomePage(),
+      home: _decideMainPage(),
     );
+  }
+
+  _decideMainPage() {
+    if (prefs == null) {
+      return Login();
+    } else if (prefs.getString('auth_code') != null) {
+      return DashBoard();
+    } else {
+      return Login();
+    }
   }
 }
 
-class MyHomePage extends StatefulWidget {
+class Homepage extends StatefulWidget {
+  final SharedPreferences prefs;
+  Homepage({this.prefs});
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  _Homepage createState() => _Homepage();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _Homepage extends State<Homepage> {
   TextEditingController user = TextEditingController();
   TextEditingController pass = TextEditingController();
 
@@ -76,7 +96,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Login SignUp',
+          'Plistio',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),

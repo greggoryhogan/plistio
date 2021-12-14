@@ -20,7 +20,7 @@ if(isset($_POST['auth_token'])) {
 		die();
 	}
 
-	while ($row = mysql_fetch_assoc($result)) {
+	while ($row = mysqli_fetch_array($result)) {
 		$username = $row['username'];
 	}
 	mysql_free_result($result);

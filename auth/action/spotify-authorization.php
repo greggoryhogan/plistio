@@ -3,69 +3,50 @@
  * Interpret Spotify redirect uri
  */ 
 
-if(isset($_GET['auth_token'])) {
-    $auth_token = $_GET['auth_token'];
-    $refreshToken = get_spotify_refresh_token($auth_token);
-    if($refreshToken !== false) {
-        $return = '';
-        $session = new SpotifyWebAPI\Session(
-            SPOTIFY_CLIENT_ID,
-            SPOTIFY_CLIENT_SECRET,
-            SPOTIFY_REDIRECT_URI
-        );
-        $options = [
-            'auto_refresh' => true,
-        ];
-        
-        $session->refreshAccessToken($refreshToken);
-        $accessToken = $session->getAccessToken();
-        $refreshToken = $session->getRefreshToken();
-        
-        $api = new SpotifyWebAPI\SpotifyWebAPI($options, $session);
-        // Set our new access token on the API wrapper and continue to use the API as usual
-        $api->setAccessToken($accessToken);
-        
-        // Call the API as usual
-        $me = $api->me();
-        $return .= 'Welcome '.$me->display_name.', thanks for authorizing!<br>Here are some playlists you have<br>';
-        $spotify_id = $me->id;
-        
-        $playlists = $api->getUserPlaylists($spotify_id);
-        
-        foreach ($playlists->items as $playlist) {
-            $return .= '<a href="' . $playlist->external_urls->spotify . '">' . $playlist->name . '</a> <br>';
-        }
-        //$newlist = $api->createPlaylist(array('name'=>'Plistio Test','public'=>false));
-        //$newlistid = $newlist->id;
-        //$return .= $newlistid .' ID!';
-        //$api->unfollowPlaylist('5ied7LVuEgl1FkL4RXqzxl');
-        //print_r($newlist);
+$session = new SpotifyWebAPI\Session(
+    PLISTIO_SPOTIFY_CLIENT_ID,
+    PLISTIO_SPOTIFY_CLIENT_SECRET,
+    PLISTIO_SPOTIFY_REDIRECT_URI
+);
 
-        return $return; 
-        
+if (isset($_GET['code'])) {
+    /*$state = $_GET['state'];
+    // Fetch the stored state value from somewhere. A session for example
+    if ($state !== SPOTIFY_STATE) {
+        // The state returned isn't the same as the one we've stored, we shouldn't continue
+        //die('State mismatch');
+    }*/
 
-    } else {
-        $session = new SpotifyWebAPI\Session(
-            SPOTIFY_CLIENT_ID,
-            SPOTIFY_CLIENT_SECRET,
-            SPOTIFY_REDIRECT_URI
-        );
-        $options = [
-            'scope' => [
-                'user-read-playback-state',
-                'user-modify-playback-state',
-                'user-read-currently-playing',
-                'user-read-email',
-                'playlist-modify-private',
-                'playlist-read-collaborative',
-                'playlist-read-private',
-                'playlist-modify-public'
-            ],
+    // Request a access token using the code from Spotify
+    $session->requestAccessToken($_GET['code']);
+    $accessToken = $session->getAccessToken();
+    $refreshToken = $session->getRefreshToken();
 
-        ];
-        return '<a href="'.$session->getAuthorizeUrl($options).'" class="btn btn-primary">Authorize Spotify</a>';
-    }
+    // Store the access and refresh tokens somewhere. In a session for example
+    $table = $wpdb->prefix.'plistio_auth';
+    $data = array( 
+        'spotify_code' => $_GET['code'], 
+        'spotify_access_token' => $accessToken, 
+        'spotify_refresh_token' => $refreshToken, 
+    ); 
+    $where = array('id' => $GLOBALS['user_id']);
+    $wpdb->update($table, $data, $where);
+    wp_redirect(get_bloginfo('url').'?connected=1');
+    exit;
 } else {
-    return 'No one is logged in';
+    $options = [
+        'scope' => [
+            'user-read-playback-state',
+            'user-modify-playback-state',
+            'user-read-currently-playing',
+            'user-read-email',
+            'playlist-modify-private',
+            'playlist-read-collaborative',
+            'playlist-read-private',
+            'playlist-modify-public'
+        ],
+    ];
+    wp_redirect($session->getAuthorizeUrl($options));
+    exit;
 }
 ?>

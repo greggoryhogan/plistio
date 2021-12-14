@@ -2,22 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:dio/dio.dart';
 import 'dashboard.dart';
-import 'package:plistio/screens/login.dart';
+import 'package:plistio/screens/register.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert'; // for the utf8.encode method
 import 'package:shared_preferences/shared_preferences.dart';
 
-class Register extends StatefulWidget {
+class Login extends StatefulWidget {
   @override
-  _RegisterState createState() => _RegisterState();
+  _LoginState createState() => _LoginState();
 }
 
-class _RegisterState extends State<Register> {
+class _LoginState extends State<Login> {
   TextEditingController user = TextEditingController();
   TextEditingController pass = TextEditingController();
 
-  Future register() async {
+  Future login() async {
     final _prefs = await SharedPreferences.getInstance();
     try {
       var bytes = utf8.encode(pass.text);
@@ -28,9 +28,10 @@ class _RegisterState extends State<Register> {
       });
 
       var response = await Dio()
-          .post('https://plistio-auth.local/user/add-new.php', data: formData);
+          .post('https://plistio-auth.local/user/login.php', data: formData);
 
       var data = response.data;
+      print(data);
       if (response.statusCode == 200) {
         _prefs.setString('auth_code', data['auth_code']);
         FlutterToast(context).showToast(
@@ -54,18 +55,7 @@ class _RegisterState extends State<Register> {
         print(e.message);
         //print(e.request);
       }
-    } /*catch (e) {
-        print(e);
-        /*FlutterToast(context).showToast(
-            child: Text(e.response,
-                style: TextStyle(fontSize: 25, color: Colors.green)));*/
-        /*Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => DashBoard(),
-          ),
-        );*/
-      }*/
+    }
   }
 
   @override
@@ -85,7 +75,7 @@ class _RegisterState extends State<Register> {
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Text(
-                  'Register',
+                  'Login',
                   style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
                 ),
               ),
@@ -118,13 +108,13 @@ class _RegisterState extends State<Register> {
                 padding: const EdgeInsets.all(8.0),
                 child: MaterialButton(
                   color: Colors.pink,
-                  child: Text('Register',
+                  child: Text('Login',
                       style: TextStyle(
                           fontSize: 30,
                           fontWeight: FontWeight.bold,
                           color: Colors.white)),
                   onPressed: () {
-                    register();
+                    login();
                   },
                 ),
               ),
@@ -135,11 +125,11 @@ class _RegisterState extends State<Register> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => Login(),
+                        builder: (context) => Register(),
                       ),
                     );
                   },
-                  child: new Text("Already have an account? Log In"),
+                  child: new Text("Don't have an account? Register"),
                 ),
               ),
             ],
